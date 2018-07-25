@@ -18,11 +18,10 @@ impl Maze {
 		let start = find_start(width, &pixels).unwrap_or(Coordinate::new(0,0));
 		let end = find_end(width, &pixels).unwrap_or(Coordinate::new(width-1, height-1));
 
-		let mut grid = Vec::with_capacity(height);
-		for i in 0..height {
-			let mut v = Vec::with_capacity(width);
-			for j in 0..width {
-				v.push({
+		let mut grid = vec![Vec::with_capacity(height); width];
+		for j in 0..width {
+			for i in 0..height {
+				grid[j].push({
 					let cur_pixel = &pixels[i*width*3+j*3..i*width*3+j*3+3]; 
 					if cur_pixel[0] == 0 && cur_pixel[1] == 0 && cur_pixel[2] == 0 {
 						1
@@ -31,7 +30,6 @@ impl Maze {
 					}
 				});
 			}
-			grid.push(v);
 		}
 
 		Maze {
@@ -118,10 +116,9 @@ mod test {
 			255, 255, 255, 0, 0, 0, 255, 255, 255,
 		];
 		let expected_grid = vec![
-			vec![1, 1, 0],
-			vec![0, 0, 1],
-			vec![0, 1, 1],
-			vec![0, 1, 0],
+			vec![1, 0, 0, 0],
+			vec![1, 0, 1, 1],
+			vec![0, 1, 1, 0],
 		];
 
 		let maze = Maze::from_image(3, 4, &pixels);

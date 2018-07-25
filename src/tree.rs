@@ -48,6 +48,7 @@ impl<'a, T> Iterator for DepthFirstIter<'a, T> {
 	}
 }
 
+#[cfg(test)]
 mod test {
 	use super::*;
 	#[test]
