@@ -34,21 +34,22 @@ pub fn maze_to_tree(maze: &Maze) -> TernaryTree<Coordinate> {
 				let cur_node = next.take().unwrap().as_mut().unwrap();
 				next = Some(match p {
 					TreePath::Left => {
-						*(cur_node.left.as_mut().unwrap()) = Box::new(Node::new(cor));
+						cur_node.left = Some(Box::new(Node::new(cor)));
 						&mut cur_node.left
 					},
 					TreePath::Right => {
-						*(cur_node.right.as_mut().unwrap()) = Box::new(Node::new(cor));
+						cur_node.right = Some(Box::new(Node::new(cor)));
 						&mut cur_node.right
 					},
 					TreePath::Middle => {
-						*(cur_node.middle.as_mut().unwrap()) = Box::new(Node::new(cor));
+						cur_node.middle = Some(Box::new(Node::new(cor)));
 						&mut cur_node.middle
 					}
 				});
+				junctions.push(cor);
 
 			} else {
-				last = junctions.pop().unwrap();
+				last = junctions.pop().expect("no junctions left");
 			}
 			if junctions.is_empty() {
 				break;
@@ -213,5 +214,25 @@ mod test {
 		1 1 0 1 1 0 
 		0 0 0 0 0 0
 		*/
+		let grid = vec![
+			vec![0, 1, 1, 0],
+			vec![0, 0, 1, 0],
+			vec![1, 0, 0, 0],
+			vec![0, 0, 1, 0],
+			vec![0, 1, 1, 0],
+			vec![0, 0, 0, 0]
+		];
+		let maze = Maze {
+			width:6,
+			height:4,
+			start:Coordinate::new(1,0),
+			end:Coordinate::new(0,0),
+			grid:grid,		
+		};
+		let tree = maze_to_tree(&maze);
+		assert_eq!(tree.root.as_ref().unwrap().elem, Coordinate::new(1,0));
+		assert_eq!(tree.root.as_ref().unwrap().right, None);
+		assert_eq!(tree.root.as_ref().unwrap().left.as_ref().unwrap().elem, Coordinate::new(0,0));
+		assert_eq!(tree.root.as_ref().unwrap().middle.as_ref().unwrap().elem, Coordinate::new(1,1));
 	}
 }
