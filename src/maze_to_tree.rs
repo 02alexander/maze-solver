@@ -1,6 +1,6 @@
 
 use super::maze::{Maze, Coordinate};
-use super::tree::TernaryTree;
+use super::tree::{TernaryTree, Node};
 
 #[derive(PartialEq, Eq, Debug)]
 enum Direction {
@@ -19,10 +19,43 @@ enum TreePath {
 
 pub fn maze_to_tree(maze: &Maze) -> TernaryTree<Coordinate> {
 	let mut visited_tiles = vec![vec![0;maze.height];maze.width]; // 0 means it's not visited and 1 means it is.
-	
-	
-	
-	unimplemented!()
+	let mut junctions = Vec::new();
+	let mut tree = TernaryTree::new();
+	let mut last = maze.start;
+	tree.root = Some(Box::new(Node::new(last)));
+	{ 
+		let mut next = Some(&mut tree.root);
+		loop {
+			if let Some(a) = get_adjacent_unvisited_tile(last, &maze, &visited_tiles) {
+				let cor = a.0;
+				let dir = a.1;
+				let p = direction_to_path(last, cor, dir);
+				visited_tiles[cor.x][cor.y] = 1;
+				let cur_node = next.take().unwrap().as_mut().unwrap();
+				next = Some(match p {
+					TreePath::Left => {
+						*(cur_node.left.as_mut().unwrap()) = Box::new(Node::new(cor));
+						&mut cur_node.left
+					},
+					TreePath::Right => {
+						*(cur_node.right.as_mut().unwrap()) = Box::new(Node::new(cor));
+						&mut cur_node.right
+					},
+					TreePath::Middle => {
+						*(cur_node.middle.as_mut().unwrap()) = Box::new(Node::new(cor));
+						&mut cur_node.middle
+					}
+				});
+
+			} else {
+				last = junctions.pop().unwrap();
+			}
+			if junctions.is_empty() {
+				break;
+			}
+		}
+	}
+	tree
 }
 
 /// Gets a adjacent unvisited tile that is not a wall.
@@ -31,6 +64,7 @@ fn get_adjacent_unvisited_tile(tile: Coordinate,
 							   maze: &Maze,
 							   visited_tiles: &Vec<Vec<u8>>) 
 							  -> Option<(Coordinate, Direction)> {
+
 
 	let x = tile.x as i32 - 1;
 	let y = tile.y as i32;
@@ -86,9 +120,8 @@ fn direction_from(a: Coordinate, b: Coordinate) -> Direction {
 #[cfg(test)]
 mod test {
 	use super::*;
-
 	#[test]
-	fn dir_from() {
+	fn t_direction_from() {
 		assert_eq!(Direction::Down, direction_from(Coordinate::new(0,0), Coordinate::new(0,1)));
 		assert_eq!(Direction::Up, direction_from(Coordinate::new(1,1), Coordinate::new(1,0)));
 		assert_eq!(Direction::Left, direction_from(Coordinate::new(1,1), Coordinate::new(0,1)));
@@ -96,7 +129,7 @@ mod test {
 	}
 
 	#[test]
-	fn dir_to_path() {
+	fn t_direction_to_path() {
 		assert_eq!(TreePath::Middle, direction_to_path(Coordinate::new(0,0), Coordinate::new(1,0), Direction::Right));
 		assert_eq!(TreePath::Left, direction_to_path(Coordinate::new(1,0), Coordinate::new(0,0), Direction::Down));
 		assert_eq!(TreePath::Left, direction_to_path(Coordinate::new(1,1), Coordinate::new(1,0), Direction::Left));
@@ -104,15 +137,15 @@ mod test {
 	}
 
 	#[test]
-	fn get_tile() {
-/*
-		1, 1, 0, 1, 0,
-		0, 0, 0, 1, 0,
-		0, 1, 1, 1, 0,
-		0, 0, 1, 0, 0,
-		1, 0, 0, 0, 1, 
-		0, 0, 1, 1, 1, 
-*/
+	fn t_get_tile() { 
+
+		// 1, 1, 0, 1, 0,
+		// 0, 0, 0, 1, 0,
+		// 0, 1, 1, 1, 0,
+		// 0, 0, 1, 0, 0,
+		// 1, 0, 0, 0, 1, 
+		// 0, 0, 1, 1, 1, 
+
 		let maze = Maze { 
 			width:5, 
 			height:6, 
@@ -126,14 +159,14 @@ mod test {
 				vec![0, 0, 0, 0, 1, 1]
 			]
 		};
-/*
-		0, 0, 0, 0, 0,
-		0, 1, 1, 0, 0,
-		0, 0, 0, 0, 1,
-		0, 0, 0, 0, 0,
-		0, 1, 0, 0, 0,
-		0, 0, 0, 0, 0,
-*/
+
+		// 0, 0, 0, 0, 0,
+		// 0, 1, 1, 0, 0,
+		// 0, 0, 0, 0, 1,
+		// 0, 0, 0, 0, 0,
+		// 0, 1, 0, 0, 0,
+		// 0, 0, 0, 0, 0,
+
 		let visited_tiles = vec![
 			vec![0, 0, 0, 0, 0, 0],
 			vec![0, 1, 0, 0, 1, 0],
@@ -170,5 +203,15 @@ mod test {
 										&maze,
 										&visited_tiles)
 		);
+	}
+
+	#[test]
+	fn t_maze_to_tree() {
+		/*
+		0 0 1 0 0 0
+		1 0 0 0 1 0
+		1 1 0 1 1 0 
+		0 0 0 0 0 0
+		*/
 	}
 }
