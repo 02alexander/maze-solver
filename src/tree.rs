@@ -17,7 +17,7 @@ pub struct Node<T> {
 
 impl<T> Node<T> {
 	pub fn new(elem: T) -> Self {
-		Node { elem:elem, left:None, middle:None, right:None }
+		Node { elem:elem, left:None, up:None, right:None, down:None }
 	}
 }
 

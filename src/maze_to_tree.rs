@@ -1,6 +1,7 @@
 
 use super::maze::{Maze, Coordinate};
-use super::tree::{TernaryTree, Node};
+use super::tree::{QuaternaryTree, Node};
+use std::collections::VecDeque;
 
 #[derive(PartialEq, Eq, Debug)]
 enum Direction {
@@ -10,50 +11,61 @@ enum Direction {
 	Left=-2,
 }
 
-#[derive(PartialEq, Eq, Debug)]
-enum TreePath {
-	Left,
-	Right,
-	Middle
-}
 
-pub fn maze_to_tree(maze: &Maze) -> TernaryTree<Coordinate> {
+pub fn maze_to_tree(maze: &Maze) -> QuaternaryTree<Coordinate> {
 	let mut visited_tiles = vec![vec![0;maze.height];maze.width]; // 0 means it's not visited and 1 means it is.
-	let mut junctions = Vec::new();
-	let mut tree = TernaryTree::new();
-	let mut last = maze.start;
-	tree.root = Some(Box::new(Node::new(last)));
+	let mut tree = QuaternaryTree::new();
+	tree.root = Some(Box::new(Node::new(maze.start)));
+	visited_tiles[maze.start.x][maze.start.y] = 1;
 	{ 
-		let mut next = Some(&mut tree.root);
+		let mut next = Some(tree.root.as_mut().unwrap());
+		let mut junctions = VecDeque::new();
 		loop {
-			if let Some(a) = get_adjacent_unvisited_tile(last, &maze, &visited_tiles) {
-				let cor = a.0;
-				let dir = a.1;
-				let p = direction_to_path(last, cor, dir);
-				visited_tiles[cor.x][cor.y] = 1;
-				let cur_node = next.take().unwrap().as_mut().unwrap();
-				next = Some(match p {
-					TreePath::Left => {
-						cur_node.left = Some(Box::new(Node::new(cor)));
-						&mut cur_node.left
-					},
-					TreePath::Right => {
-						cur_node.right = Some(Box::new(Node::new(cor)));
-						&mut cur_node.right
-					},
-					TreePath::Middle => {
-						cur_node.middle = Some(Box::new(Node::new(cor)));
-						&mut cur_node.middle
-					}
-				});
-				junctions.push(cor);
+			let cur_node = &mut**next.take().unwrap();
 
-			} else {
-				last = junctions.pop().expect("no junctions left");
+			let mut cors = Vec::new();
+			let mut dirs = Vec::new();
+			for _ in 0..4 {
+				if let Some(tup) = get_adjacent_unvisited_tile(cur_node.elem, &maze, &visited_tiles) {
+					visited_tiles[tup.0.x][tup.0.y] = 1;
+					cors.push(tup.0);
+					dirs.push(tup.1);
+				}
 			}
+
+			#[cfg(debug_assertions)] {
+				for i in 0..cors.len() {
+					println!("({},{}), {:?}", cors[i].x,cors[i].y,dirs[i]);
+				}
+				println!("");
+			}
+			
+			if let Some(tup) = dirs.iter().enumerate().find(|x| *x.1 == Direction::Left)  {
+				let indx = tup.0;
+				cur_node.left = Some(Box::new(Node::new(cors[indx])));
+				junctions.push_back(cur_node.left.as_mut().unwrap());
+			}
+			if let Some(tup) = dirs.iter().enumerate().find(|x| *x.1 == Direction::Right) {
+				let indx = tup.0;
+				cur_node.right = Some(Box::new(Node::new(cors[indx])));
+				junctions.push_back(cur_node.right.as_mut().unwrap());
+			}
+			if let Some(tup) = dirs.iter().enumerate().find(|x| *x.1 == Direction::Up) {
+				let indx = tup.0;
+				cur_node.up = Some(Box::new(Node::new(cors[indx])));
+				junctions.push_back(cur_node.up.as_mut().unwrap());
+			}
+			if let Some(tup) = dirs.iter().enumerate().find(|x| *x.1 == Direction::Down) {
+				let indx = tup.0;
+				cur_node.down = Some(Box::new(Node::new(cors[indx])));
+				junctions.push_back(cur_node.down.as_mut().unwrap());
+			}
+
 			if junctions.is_empty() {
 				break;
 			}
+
+			next = junctions.pop_front();
 		}
 	}
 	tree
@@ -90,52 +102,10 @@ fn get_adjacent_unvisited_tile(tile: Coordinate,
 	None
 }
 
-fn direction_to_path(step1: Coordinate, step2: Coordinate, direction: Direction) -> TreePath {
-	use self::Direction::*;
-	let dir = direction_from(step1, step2);
-	if dir==direction { return TreePath::Middle }
-	else if dir==Down && direction==Left { return TreePath::Right }
-	else if dir==Down && direction==Right { return TreePath::Left }
-	else if dir==Up && direction==Left { return TreePath::Left }
-	else if dir==Up && direction==Right {return TreePath::Right }
-	else if dir==Left && direction==Up { return TreePath::Right }
-	else if dir==Left && direction==Down { return TreePath::Left }
-	else if dir==Right && direction==Up { return TreePath::Left }
-	else { return TreePath::Right }
-}
-
-
-/// Returns direction needed to go from a to b
-fn direction_from(a: Coordinate, b: Coordinate) -> Direction {
-	if a.x > b.x {
-		Direction::Left
-	} else if a.x < b.x {
-		Direction::Right
-	}  else if a.y < b.y {
-		Direction::Down
-	} else {
-		Direction::Up
-	}
-}
 
 #[cfg(test)]
 mod test {
 	use super::*;
-	#[test]
-	fn t_direction_from() {
-		assert_eq!(Direction::Down, direction_from(Coordinate::new(0,0), Coordinate::new(0,1)));
-		assert_eq!(Direction::Up, direction_from(Coordinate::new(1,1), Coordinate::new(1,0)));
-		assert_eq!(Direction::Left, direction_from(Coordinate::new(1,1), Coordinate::new(0,1)));
-		assert_eq!(Direction::Right, direction_from(Coordinate::new(1,1), Coordinate::new(2,1)));
-	}
-
-	#[test]
-	fn t_direction_to_path() {
-		assert_eq!(TreePath::Middle, direction_to_path(Coordinate::new(0,0), Coordinate::new(1,0), Direction::Right));
-		assert_eq!(TreePath::Left, direction_to_path(Coordinate::new(1,0), Coordinate::new(0,0), Direction::Down));
-		assert_eq!(TreePath::Left, direction_to_path(Coordinate::new(1,1), Coordinate::new(1,0), Direction::Left));
-		assert_eq!(TreePath::Right, direction_to_path(Coordinate::new(1,1), Coordinate::new(2,1), Direction::Down));
-	}
 
 	#[test]
 	fn t_get_tile() { 
@@ -230,9 +200,13 @@ mod test {
 			grid:grid,		
 		};
 		let tree = maze_to_tree(&maze);
-		assert_eq!(tree.root.as_ref().unwrap().elem, Coordinate::new(1,0));
-		assert_eq!(tree.root.as_ref().unwrap().right, None);
+		assert_eq!(tree.root.as_ref().unwrap().elem, Coordinate::new(1,0));		
 		assert_eq!(tree.root.as_ref().unwrap().left.as_ref().unwrap().elem, Coordinate::new(0,0));
-		assert_eq!(tree.root.as_ref().unwrap().middle.as_ref().unwrap().elem, Coordinate::new(1,1));
+		assert_eq!(tree.root.as_ref().unwrap().right, None);
+		assert_eq!(tree.root.as_ref().unwrap().down.as_ref().unwrap().right.as_ref().unwrap().elem, Coordinate::new(2,1));
+		assert_eq!(tree.root.as_ref().unwrap().down.as_ref().unwrap().right.as_ref().unwrap().down.as_ref().unwrap().elem, Coordinate::new(2,2));
+		assert_eq!(tree.root.as_ref().unwrap().down.as_ref().unwrap().right.as_ref().unwrap().down.as_ref().unwrap().down.as_ref().unwrap().elem, Coordinate::new(2,3));
+		assert_eq!(tree.root.as_ref().unwrap().down.as_ref().unwrap().right.as_ref().unwrap().right.as_ref().unwrap().elem, Coordinate::new(3,1));
+		assert_eq!(tree.root.as_ref().unwrap().down.as_ref().unwrap().right.as_ref().unwrap().right.as_ref().unwrap().up.as_ref().unwrap().elem, Coordinate::new(3,0));
 	}
 }
