@@ -3,7 +3,7 @@ pub struct QuaternaryTree<T> {
 	pub root: Link<T>,
 }
 
-type Link<T> = Option<Box<Node<T>>>;
+pub type Link<T> = Option<Box<Node<T>>>;
 
 #[derive(PartialEq, Eq, Debug)]
 pub struct Node<T> {

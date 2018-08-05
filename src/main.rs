@@ -7,6 +7,7 @@ use maze::{Coordinate, Maze};
 pub mod tree;
 pub mod maze;
 pub mod maze_to_tree;
+pub mod path_to_end;
 
 
 fn main() {
