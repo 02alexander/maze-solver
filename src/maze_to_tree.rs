@@ -81,22 +81,22 @@ fn get_adjacent_unvisited_tile(tile: Coordinate,
 
 	let x = tile.x as i32 - 1;
 	let y = tile.y as i32;
-	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==0 && visited_tiles[x as usize][y as usize]==0 { // left
+	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==1 && visited_tiles[x as usize][y as usize]==0 { // left
 		return Some((Coordinate::new(x as usize, y as usize), Direction::Left));
 	}
 	let x = tile.x as i32 + 1;
 	let y = tile.y as i32;
-	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==0 && visited_tiles[x as usize][y as usize]==0 { // right
+	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==1 && visited_tiles[x as usize][y as usize]==0 { // right
 		return Some((Coordinate::new(x as usize,y as usize), Direction::Right));
 	}
 	let x = tile.x as i32;
 	let y = tile.y as i32 - 1;
-	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==0 && visited_tiles[x as usize][y as usize]==0 { // up
+	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==1 && visited_tiles[x as usize][y as usize]==0 { // up
 		return Some((Coordinate::new(x as usize, y as usize), Direction::Up));
 	}
 	let x = tile.x as i32;
 	let y = tile.y as i32 + 1;
-	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==0 && visited_tiles[x as usize][y as usize]==0 { // down
+	if maze.is_inside(x, y) && maze.grid[x as usize][y as usize]==1 && visited_tiles[x as usize][y as usize]==0 { // down
 		return Some((Coordinate::new(x as usize, y as usize), Direction::Down));
 	}
 	None
@@ -110,12 +110,12 @@ mod test {
 	#[test]
 	fn t_get_tile() { 
 
-		// 1, 1, 0, 1, 0,
-		// 0, 0, 0, 1, 0,
-		// 0, 1, 1, 1, 0,
-		// 0, 0, 1, 0, 0,
-		// 1, 0, 0, 0, 1, 
-		// 0, 0, 1, 1, 1, 
+		// 0, 0, 1, 0, 1,
+		// 1, 1, 1, 0, 1,
+		// 1, 0, 0, 0, 1,
+		// 1, 1, 0, 1, 1,
+		// 0, 1, 1, 1, 0, 
+		// 1, 1, 0, 0, 0, 
 
 		let maze = Maze { 
 			width:5, 
@@ -123,11 +123,11 @@ mod test {
 			start:Coordinate::new(0,0), 
 			end:Coordinate::new(0,0),
 			grid:vec![
-				vec![1, 0, 0, 0, 1, 0],
-				vec![1, 0, 1, 0, 0, 0],
-				vec![0, 0, 1, 1, 0, 1],
-				vec![1, 1, 1, 0, 0, 1],
-				vec![0, 0, 0, 0, 1, 1]
+				vec![0, 1, 1, 1, 0, 1],
+				vec![0, 1, 0, 1, 1, 1],
+				vec![1, 1, 0, 0, 1, 0],
+				vec![0, 0, 0, 1, 1, 0],
+				vec![1, 1, 1, 1, 0, 0]
 			]
 		};
 
@@ -179,18 +179,18 @@ mod test {
 	#[test]
 	fn t_maze_to_tree() {
 		/*
-		0 0 1 0 0 0
-		1 0 0 0 1 0
-		1 1 0 1 1 0 
-		0 0 0 0 0 0
+		1 1 0 1 1 1
+		0 1 1 1 0 1
+		0 0 1 0 0 1 
+		1 1 1 1 1 1
 		*/
 		let grid = vec![
-			vec![0, 1, 1, 0],
-			vec![0, 0, 1, 0],
-			vec![1, 0, 0, 0],
-			vec![0, 0, 1, 0],
-			vec![0, 1, 1, 0],
-			vec![0, 0, 0, 0]
+			vec![1, 0, 0, 1],
+			vec![1, 1, 0, 1],
+			vec![0, 1, 1, 1],
+			vec![1, 1, 0, 1],
+			vec![1, 0, 0, 1],
+			vec![1, 1, 1, 1]
 		];
 		let maze = Maze {
 			width:6,

@@ -2,7 +2,7 @@
 pub struct Maze {
 	pub width: usize,
 	pub height: usize,
-	pub grid: Vec<Vec<u8>>, // walls have the value of 1 and path 0.
+	pub grid: Vec<Vec<u8>>, // walls have the value of 0 and path 1.
 	pub start: Coordinate,
 	pub end: Coordinate,
 }
@@ -24,9 +24,9 @@ impl Maze {
 				grid[j].push({
 					let cur_pixel = &pixels[i*width*3+j*3..i*width*3+j*3+3]; 
 					if cur_pixel[0] == 0 && cur_pixel[1] == 0 && cur_pixel[2] == 0 {
-						1
-					} else  {
 						0
+					} else  {
+						1
 					}
 				});
 			}
@@ -39,6 +39,28 @@ impl Maze {
 			start: start,
 			end: end,
 		}
+	}
+
+	pub fn as_image(&self) -> Vec<u8> {
+		let mut image = Vec::with_capacity(self.width*self.height*3);
+		for y in 0..self.height {
+			for x in 0..self.width {
+				if self.start.x == x && self.start.y == y {
+					// red
+					image.push(255); image.push(0); image.push(0);
+				} else if self.end.x == x && self.end.y == y {
+					// blue
+					image.push(0); image.push(0); image.push(255);
+				} else if self.grid[x][y] == 0 {
+					// black
+					image.push(0); image.push(0); image.push(0);
+				} else {
+					// white
+					image.push(255); image.push(255); image.push(255); 
+				}
+			}
+		}
+		image
 	}
 
 	///Returns true if the x, y coordinates are inside the maze. 
@@ -116,9 +138,9 @@ mod test {
 			255, 255, 255, 0, 0, 0, 255, 255, 255,
 		];
 		let expected_grid = vec![
-			vec![1, 0, 0, 0],
-			vec![1, 0, 1, 1],
-			vec![0, 1, 1, 0],
+			vec![0, 1, 1, 1],
+			vec![0, 1, 0, 0],
+			vec![1, 0, 0, 1],
 		];
 
 		let maze = Maze::from_image(3, 4, &pixels);
