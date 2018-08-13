@@ -31,7 +31,7 @@ impl Maze {
 				});
 			}
 		}
-
+		
 		Maze {
 			width: width,
 			height: height,

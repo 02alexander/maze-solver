@@ -19,8 +19,6 @@ fn main() {
 	let pixels = to_pixels(&path, &maze);
 	imagefmt::write("out.bmp", maze.width, maze.height, ColFmt::RGB, &pixels, ColType::Auto);
 	
-	
-
 }
 
 
